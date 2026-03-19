@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TopTune Battle - Play</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="game-container">
+        <!-- Header -->
+        <header class="game-header">
+            <div class="round-info">
+                <span id="round-display">Waiting to start...</span>
+            </div>
+            <div class="timer" id="timer"></div>
+            <button class="exit-btn" id="exit-game-btn">Exit Game</button>
+        </header>
+        
+        <!-- Players List -->
+        <aside class="players-sidebar">
+            <h3>Players</h3>
+            <div id="players-list"></div>
+        </aside>
+        
+        <!-- Main Game Area -->
+        <main class="game-main">
+            <!-- Waiting Phase -->
+            <div id="waiting-phase" class="phase-screen">
+                <h2>Waiting for players...</h2>
+                <p>Game Master can start the game when ready</p>
+                <div id="gm-settings" style="display: none; margin: 20px 0;">
+                    <label for="round-count" style="font-weight: 600; margin-right: 10px;">Number of Rounds:</label>
+                    <select id="round-count" style="padding: 10px 15px; font-size: 16px; border-radius: 8px; border: 2px solid #e0e0e0;">
+                        <option value="3">3 rounds</option>
+                        <option value="5">5 rounds</option>
+                        <option value="10" selected>10 rounds</option>
+                        <option value="15">15 rounds</option>
+                        <option value="20">20 rounds</option>
+                    </select>
+                </div>
+                <button id="start-game-btn" class="btn-primary" style="display: none;">Start Game</button>
+            </div>
+            
+            <!-- Prompt Phase (GM only) -->
+            <div id="prompt-phase" class="phase-screen" style="display: none;">
+                <h2>Round <span id="prompt-round"></span>: Write a Prompt</h2>
+                <p>As the Game Master, write a statement or scenario for players to respond with a song:</p>
+                <textarea id="prompt-input" placeholder="e.g., 'The song that plays when you get a promotion...'" maxlength="200"></textarea>
+                <button id="submit-prompt-btn" class="btn-primary">Submit Prompt</button>
+            </div>
+            
+            <!-- Song Submission Phase -->
+            <div id="submitting-phase" class="phase-screen" style="display: none;">
+                <h2 id="submitting-prompt-display"></h2>
+                <p class="phase-description">Search for the perfect song to respond!</p>
+                
+                <div class="song-search-container">
+                    <div class="search-box">
+                        <input type="text" id="song-search-input" placeholder="Search for a song or artist..." autocomplete="off">
+                    </div>
+                    
+                    <div class="song-results" id="song-results">
+                        <p class="song-hint">Type something to search for songs!</p>
+                    </div>
+                    
+                    <div class="selected-song-container" id="selected-song-container" style="display: none;">
+                        <h4>Your Selection:</h4>
+                        <div class="selected-song-preview">
+                            <img id="selected-song-thumbnail" src="" alt="Album Art" class="selected-album-art">
+                            <div class="selected-song-info">
+                                <div id="selected-song-title" class="selected-title"></div>
+                                <div id="selected-song-artist" class="selected-artist"></div>
+                            </div>
+                        </div>
+                        <button id="preview-selected-btn" class="btn-secondary" style="margin-bottom: 10px;">▶ Preview</button>
+                        <button id="submit-song-btn" class="btn-primary" style="background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); font-size: 1.2em; padding: 15px 30px;">✓ Submit This Song</button>
+                        <button id="clear-selection-btn" class="btn-secondary">Choose Different</button>
+                    </div>
+                </div>
+                
+                <div class="submission-status" id="submission-status"></div>
+            </div>
+            
+            <!-- Voting Phase -->
+            <div id="voting-phase" class="phase-screen" style="display: none;">
+                <h2 id="voting-prompt-display" style="color: #667eea; font-style: italic; margin-bottom: 10px;"></h2>
+                <h3>Vote for Your Favorite Song!</h3>
+                <p class="phase-description">Click the thumbnail to vote. Use ▶ to preview.</p>
+                <div class="songs-grid" id="songs-grid"></div>
+            </div>
+            
+            <!-- Results Phase -->
+            <div id="results-phase" class="phase-screen" style="display: none;">
+                <h2>Round Results</h2>
+                <div id="results-display"></div>
+                <div id="gm-results-buttons" style="display: none; margin-top: 20px;">
+                    <button id="start-commenting-btn" class="btn-primary">💬 Let Players Comment</button>
+                    <button id="next-round-btn" class="btn-secondary" style="margin-left: 10px;">Skip → Next Round</button>
+                </div>
+            </div>
+            
+            <!-- Commenting Phase -->
+            <div id="commenting-phase" class="phase-screen" style="display: none;">
+                <h2>💬 Comment Time!</h2>
+                <p class="phase-description">Share your thoughts on the songs!</p>
+                
+                <div id="comments-container" style="display: flex; gap: 30px; flex-wrap: wrap; justify-content: center; margin-bottom: 20px;">
+                    <div id="vote-comment-section" style="flex: 1; min-width: 280px; max-width: 400px;">
+                        <h3 style="color: #667eea; margin-bottom: 10px;">🎧 Song You Voted For</h3>
+                        <div id="your-voted-song" style="text-align: center; margin-bottom: 15px;"></div>
+                        <textarea id="vote-comment-input" placeholder="I voted for this song because..." maxlength="200" style="width: 100%; min-height: 80px; padding: 12px; border-radius: 10px; border: 2px solid #e0e0e0; font-size: 14px; resize: vertical;"></textarea>
+                    </div>
+                    
+                    <div id="own-comment-section" style="flex: 1; min-width: 280px; max-width: 400px;">
+                        <h3 style="color: #ffa500; margin-bottom: 10px;">🎤 Your Own Song</h3>
+                        <div id="your-own-song" style="text-align: center; margin-bottom: 15px;"></div>
+                        <textarea id="own-comment-input" placeholder="I chose this song because..." maxlength="200" style="width: 100%; min-height: 80px; padding: 12px; border-radius: 10px; border: 2px solid #e0e0e0; font-size: 14px; resize: vertical;"></textarea>
+                    </div>
+                </div>
+                
+                <div id="comment-input-area" style="margin-top: 20px; text-align: center;">
+                    <button id="submit-comment-btn" class="btn-primary">Submit Comments</button>
+                </div>
+                <div class="submission-status" id="comment-status"></div>
+            </div>
+            
+            <!-- Game Ended -->
+            <div id="ended-phase" class="phase-screen" style="display: none;">
+                <h2>🎵 Game Over!</h2>
+                <div id="winner-display"></div>
+                <div id="final-leaderboard"></div>
+                <button class="btn-primary" id="play-again-btn">Back to Lobby</button>
+            </div>
+        </main>
+        
+        <!-- Leaderboard -->
+        <aside class="leaderboard-sidebar">
+            <h3>Leaderboard</h3>
+            <div id="leaderboard"></div>
+        </aside>
+    </div>
+    
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="client.js"></script>
+</body>
+</html>
