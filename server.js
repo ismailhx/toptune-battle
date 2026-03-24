@@ -342,7 +342,7 @@ io.on('connection', (socket) => {
   console.log('New connection:', socket.id);
 
   socket.on('gm:check', () => {
-    socket.emit('gm:status', { hasGM: gameState.gameMaster !== null });
+    socket.emit('gm:status', { hasGM: gameState.gameMaster !== null || gameState.gmDisconnectedPhase !== null });
   });
 
   // Player joins
@@ -367,7 +367,10 @@ io.on('connection', (socket) => {
     };
 
     if (data.isGM || wasGM) {
-      if (gameState.gameMaster === null || wasGM) {
+      // Block new GM claims while waiting for the real GM to reconnect
+      if (gameState.gmDisconnectedPhase && !wasGM) {
+        gameState.players[socket.id].isGM = false;
+      } else if (gameState.gameMaster === null || wasGM) {
         gameState.gameMaster = socket.id;
         gameState.players[socket.id].isGM = true;
         console.log(`GM set to ${socket.id} (${data.name})`);
@@ -394,7 +397,7 @@ io.on('connection', (socket) => {
       isGM: gameState.players[socket.id].isGM
     });
 
-    io.emit('gm:status', { hasGM: gameState.gameMaster !== null });
+    io.emit('gm:status', { hasGM: gameState.gameMaster !== null || gameState.gmDisconnectedPhase !== null });
     io.emit('players:update', getPlayersList());
     broadcastGameState();
 
