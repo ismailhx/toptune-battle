@@ -958,7 +958,7 @@ function playWinnersSequentially(winners, container, index) {
     const currentNote = winnerNotes[index];
 
     currentAudio = new Audio(winner.previewUrl);
-    currentAudio.volume = 0.15;
+    currentAudio.volume = 0.08;
     currentlyPlayingElement = currentNote;
 
     if (currentNote) {
