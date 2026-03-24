@@ -34,7 +34,7 @@ function playPreview(previewUrl, triggerElement) {
     if (!previewUrl) return;
 
     currentAudio = new Audio(previewUrl);
-    currentAudio.volume = 0.7;
+    currentAudio.volume = 0.35;
     currentlyPlayingElement = triggerElement;
 
     // Add playing class to trigger element's parent card
@@ -504,6 +504,41 @@ socket.on('game:error', (data) => {
     showNotification('⚠️ ' + data.message);
 });
 
+// GM disconnect handling
+let gmDisconnectOverlay = null;
+
+socket.on('gm:wifi_dying', () => {
+    // Show overlay telling players to wait
+    if (gmDisconnectOverlay) return;
+    gmDisconnectOverlay = document.createElement('div');
+    gmDisconnectOverlay.id = 'gm-disconnect-overlay';
+    gmDisconnectOverlay.style.cssText = `
+        position: fixed;
+        top: 0; left: 0; width: 100%; height: 100%;
+        background: rgba(0, 0, 0, 0.85);
+        display: flex; justify-content: center; align-items: center;
+        z-index: 10000;
+        animation: fadeIn 0.3s ease;
+    `;
+    gmDisconnectOverlay.innerHTML = `
+        <div style="text-align: center; padding: 40px;">
+            <div style="font-size: 5em; margin-bottom: 20px; animation: pulse 1.5s ease infinite;">📡</div>
+            <div style="font-size: 2em; font-weight: 800; color: white; margin-bottom: 15px;">gamemaster's wifi is dying</div>
+            <div style="font-size: 1.4em; color: #ccc;">hold on a moment</div>
+            <div style="margin-top: 30px; font-size: 1em; color: #999;">waiting for them to reconnect...</div>
+        </div>
+    `;
+    document.body.appendChild(gmDisconnectOverlay);
+});
+
+socket.on('gm:reconnected', () => {
+    if (gmDisconnectOverlay) {
+        gmDisconnectOverlay.remove();
+        gmDisconnectOverlay = null;
+    }
+    showNotification('✅ Game Master reconnected!');
+});
+
 // Results announcement popup
 const showResultsAnnouncement = (callback) => {
     const announcements = [
@@ -923,7 +958,7 @@ function playWinnersSequentially(winners, container, index) {
     const currentNote = winnerNotes[index];
 
     currentAudio = new Audio(winner.previewUrl);
-    currentAudio.volume = 0.7;
+    currentAudio.volume = 0.35;
     currentlyPlayingElement = currentNote;
 
     if (currentNote) {
