@@ -183,22 +183,10 @@ function endRound() {
 
   const isLastRound = gameState.currentRound >= gameState.maxRounds;
 
-  let timerEndTime = null;
-  if (isLastRound) {
-    timerEndTime = Date.now() + 45000;
-    if (gameState.timer) clearTimeout(gameState.timer);
-    gameState.timer = setTimeout(() => {
-      if (gameState.phase === 'results') {
-        endGame();
-      }
-    }, 45000);
-  }
-
   io.emit('phase:results', {
     results: Object.values(results),
     leaderboard: getPlayersList().sort((a, b) => b.points - a.points),
     isLastRound: isLastRound,
-    timerEndTime: timerEndTime,
     hasSongs: Object.keys(gameState.songs).length > 0
   });
 }
