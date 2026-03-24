@@ -414,10 +414,6 @@ socket.on('phase:results', (data) => {
         displayResults(data.results);
         updateLeaderboard(data.leaderboard);
 
-        if (data.isLastRound && data.timerEndTime) {
-            startTimer(data.timerEndTime);
-        }
-
         if (isGM) {
             document.getElementById('gm-results-buttons').style.display = 'block';
 
