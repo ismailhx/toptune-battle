@@ -34,7 +34,7 @@ function playPreview(previewUrl, triggerElement) {
     if (!previewUrl) return;
 
     currentAudio = new Audio(previewUrl);
-    currentAudio.volume = 0.1;
+    currentAudio.volume = 0.08;
     currentlyPlayingElement = triggerElement;
 
     // Add playing class to trigger element's parent card
@@ -634,7 +634,7 @@ let searchTimeout = null;
 document.getElementById('song-search-input').addEventListener('input', (e) => {
     const query = e.target.value;
     if (searchTimeout) clearTimeout(searchTimeout);
-    if (query.trim().length >= 2) {
+    if (query.trim().length >= 1) {
         searchTimeout = setTimeout(() => {
             searchSongs(query);
         }, 400);
@@ -958,7 +958,7 @@ function playWinnersSequentially(winners, container, index) {
     const currentNote = winnerNotes[index];
 
     currentAudio = new Audio(winner.previewUrl);
-    currentAudio.volume = 0.1;
+    currentAudio.volume = 0.08;
     currentlyPlayingElement = currentNote;
 
     if (currentNote) {
