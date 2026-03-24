@@ -330,6 +330,11 @@ function resetGame() {
   gameState.timer = null;
   gameState.timerEndTime = null;
   gameState.gameHistory = [];
+  gameState.gmDisconnectedPhase = null;
+  if (gameState.gmReconnectTimer) {
+    clearTimeout(gameState.gmReconnectTimer);
+    gameState.gmReconnectTimer = null;
+  }
 }
 
 // Socket.io connection handling
@@ -366,6 +371,19 @@ io.on('connection', (socket) => {
         gameState.gameMaster = socket.id;
         gameState.players[socket.id].isGM = true;
         console.log(`GM set to ${socket.id} (${data.name})`);
+
+        // If GM is reconnecting during an active game, resume it
+        if (wasGM && gameState.gmDisconnectedPhase) {
+          if (gameState.gmReconnectTimer) {
+            clearTimeout(gameState.gmReconnectTimer);
+            gameState.gmReconnectTimer = null;
+          }
+          console.log(`GM reconnected! Resuming game at phase: ${gameState.gmDisconnectedPhase}`);
+          gameState.phase = gameState.gmDisconnectedPhase;
+          gameState.gmDisconnectedPhase = null;
+          io.emit('gm:reconnected');
+          broadcastGameState();
+        }
       } else if (gameState.gameMaster !== null && !wasGM) {
         gameState.players[socket.id].isGM = false;
       }
@@ -582,21 +600,53 @@ io.on('connection', (socket) => {
 
       if (wasGM) {
         if (gameState.phase !== 'waiting' && gameState.phase !== 'ended') {
-          const leaderboard = getPlayersList().sort((a, b) => b.points - a.points);
-          const topScore = leaderboard.length > 0 ? leaderboard[0].points : 0;
-          const topWinners = leaderboard.filter(p => p.points === topScore && topScore > 0);
-          const winner = topWinners.length > 1 ? topWinners : (topWinners.length === 1 ? topWinners[0] : null);
+          // Save GM state for reconnection
+          const gmPlayer = gameState.players[socket.id];
+          const gmKey = `${gmPlayer.name}-${gmPlayer.emoji}`;
+          gameState.disconnectedPlayers[gmKey] = {
+            points: gmPlayer.points,
+            wasGM: true,
+            disconnectedAt: Date.now()
+          };
 
-          io.emit('game:ended', {
-            leaderboard: leaderboard,
-            winner: winner,
-            history: gameState.gameHistory,
-            reason: 'Game Master left'
-          });
+          // Pause active timers
+          gameState.gmDisconnectedPhase = gameState.phase;
+          if (gameState.timer) clearTimeout(gameState.timer);
+
+          delete gameState.players[socket.id];
+          gameState.gameMaster = null;
+
+          // Tell everyone the GM is reconnecting
+          io.emit('gm:wifi_dying');
+          console.log(`GM disconnected during active game, waiting for reconnect...`);
+
+          // Give GM 60 seconds to reconnect
+          gameState.gmReconnectTimer = setTimeout(() => {
+            if (!gameState.gameMaster) {
+              console.log('GM did not reconnect in time, ending game');
+              const leaderboard = getPlayersList().sort((a, b) => b.points - a.points);
+              const topScore = leaderboard.length > 0 ? leaderboard[0].points : 0;
+              const topWinners = leaderboard.filter(p => p.points === topScore && topScore > 0);
+              const winner = topWinners.length > 1 ? topWinners : (topWinners.length === 1 ? topWinners[0] : null);
+
+              io.emit('game:ended', {
+                leaderboard: leaderboard,
+                winner: winner,
+                history: gameState.gameHistory,
+                reason: 'Game Master did not reconnect'
+              });
+
+              resetGame();
+              io.emit('game:reset', { message: 'Game Master left. Returning to lobby...' });
+            }
+          }, 60000);
+        } else {
+          // GM left in waiting or ended phase — just reset
+          delete gameState.players[socket.id];
+          gameState.gameMaster = null;
+          resetGame();
+          io.emit('game:reset', { message: 'Game Master left. Returning to lobby...' });
         }
-
-        resetGame();
-        io.emit('game:reset', { message: 'Game Master left. Returning to lobby...' });
       } else {
         const player = gameState.players[socket.id];
         const playerKey = `${player.name}-${player.emoji}`;
