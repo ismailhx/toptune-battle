@@ -34,7 +34,7 @@ function playPreview(previewUrl, triggerElement) {
     if (!previewUrl) return;
 
     currentAudio = new Audio(previewUrl);
-    currentAudio.volume = 0.15;
+    currentAudio.volume = 0.5;
     currentlyPlayingElement = triggerElement;
 
     // Add playing class to trigger element's parent card
@@ -958,7 +958,7 @@ function playWinnersSequentially(winners, container, index) {
     const currentNote = winnerNotes[index];
 
     currentAudio = new Audio(winner.previewUrl);
-    currentAudio.volume = 0.08;
+    currentAudio.volume = 0.5;
     currentlyPlayingElement = currentNote;
 
     if (currentNote) {
