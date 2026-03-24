@@ -1,7 +1,7 @@
 // Get player info from session storage
 const playerName = sessionStorage.getItem('playerName');
 const playerEmoji = sessionStorage.getItem('playerEmoji');
-const isGM = sessionStorage.getItem('isGM') === 'true';
+let isGM = sessionStorage.getItem('isGM') === 'true';
 
 if (!playerName || !playerEmoji) {
     window.location.href = '/';
@@ -300,6 +300,10 @@ socket.emit('player:join', {
 // Socket event handlers
 socket.on('player:joined', (data) => {
     myPlayerId = data.playerId;
+
+    // Server is the source of truth for GM status
+    isGM = data.isGM;
+    sessionStorage.setItem('isGM', isGM);
 
     if (data.isGM) {
         document.getElementById('start-game-btn').style.display = 'block';
