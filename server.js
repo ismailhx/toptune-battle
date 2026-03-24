@@ -55,7 +55,9 @@ const gameState = {
   comments: {},
   timer: null,
   timerEndTime: null,
-  gameHistory: []
+  gameHistory: [],
+  gmDisconnectedPhase: null,
+  gmReconnectTimer: null
 };
 
 // Helper functions
